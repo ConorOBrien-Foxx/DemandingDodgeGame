@@ -32,7 +32,7 @@ export class DDGRenderer {
         for(let obstacle of this.logic.obstacles) {
             this.dcc.centeredRect({
                 ...this.#toScreenCoordinates(obstacle),
-                fill: "blue"
+                fill: this.logic.player.intersectsRectangle(obstacle) ? "green" : "blue",
             });
         }
     }

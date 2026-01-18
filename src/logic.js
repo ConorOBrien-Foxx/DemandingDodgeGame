@@ -25,6 +25,15 @@ class DDGRectangle extends DDGFieldElement {
         this.width = width;
         this.height = height;
     }
+
+    intersectsRectangle(rect) {
+        return (
+            this.x - this.width / 2 < rect.x + rect.width / 2 &&
+            this.x + this.width / 2 > rect.x - rect.width / 2 &&
+            this.y - this.height / 2 < rect.y + rect.height / 2 &&
+            this.y + this.height / 2 > rect.y - rect.height / 2
+        );
+    }
 }
 
 class DDGPlayer extends DDGRectangle {
@@ -127,8 +136,29 @@ export class DDGLogic {
             dx++;
         }
 
-        this.player.x += dx * this.player.speed * delta;
-        this.player.y += dy * this.player.speed * delta;
+        const oldX = this.player.x;
+        const oldY = this.player.y;
+
+        const newX = this.player.x + dx * this.player.speed * delta;
+        const newY = this.player.y + dy * this.player.speed * delta;
+        
+        this.player.x = newX;
+        this.player.y = newY;
+
+        // TODO: optimize by testing only obstacles close to player
+        // TODO: not all obstacles are collidable
+        for(const obstacle of this.obstacles) {
+            if(this.player.intersectsRectangle(obstacle)) {
+                for(let [x, y] of [[newX, oldY], [oldX, newY], [oldX, oldY]]) {
+                    this.player.x = x;
+                    this.player.y = y;
+                    if(!this.player.intersectsRectangle(obstacle)) {
+                        break;
+                    }
+                }
+                break;
+            }
+        }
     }
 
     #discreteStep(delta) {
