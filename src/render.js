@@ -1,9 +1,12 @@
+import { DDGCanvasContext } from "./canvas.js";
+
 export class DDGRenderer {
     #renderStartTimestamp;
 
     constructor(canvasOrCtx, logic) {
         this.canvas = canvasOrCtx?.canvas ?? canvasOrCtx;
         this.ctx = canvasOrCtx.canvas ? canvasOrCtx : this.canvas.getContext("2d");
+        this.dcc = new DDGCanvasContext(this.ctx);
         this.logic = logic;
 
         this.canvas.width = this.canvas.height = 1024;
@@ -13,56 +16,48 @@ export class DDGRenderer {
     get height() { return this.canvas.height; }
 
     #clearFrame() {
-        this.ctx.fillStyle = "white";
-        this.ctx.fillRect(0, 0, this.width, this.height);
+        this.dcc.fillCanvas("white");
     }
 
-    // temp illustration
-    #renderLine() {
-        this.ctx.lineWidth = 10;
-        this.ctx.strokeStyle = "blue";
-        const x1 = Math.random() * this.width;
-        const y1 = Math.random() * this.height;
-        const x2 = Math.random() * this.width;
-        const y2 = Math.random() * this.height;
-        this.ctx.beginPath();
-        this.ctx.moveTo(x1, y1);
-        this.ctx.lineTo(x2, y2);
-        this.ctx.stroke();
+    #toScreenCoordinates(obj) {
+        const { x, y } = obj;
+        return {
+            ...obj,
+            x: x / this.logic.width * this.width,
+            y: this.height - y / this.logic.height * this.height,
+        };
     }
 
-    #tempLineDisplay(millisecondsElapsed) {
-        this.lineCount ??= 0;
-        this.lineFrequency ??= 300; //ms
-        let dbg = 0;
-        while(this.lineCount * this.lineFrequency < millisecondsElapsed) {
-            this.#renderLine();
-            this.lineCount++;
-            if(++dbg > 5) {
-                break;
-            }
+    #renderField() {
+        for(let obstacle of this.logic.obstacles) {
+            this.dcc.centeredRect({
+                ...this.#toScreenCoordinates(obstacle),
+                fill: "blue"
+            });
         }
     }
 
     #renderPlayer() {
         let { size, position } = this.logic.player;
-        this.ctx.fillStyle = "red";
-        this.ctx.strokeStyle = "black";
-        this.ctx.lineWidth = 8;
-        // TODO: helper functions
-        this.ctx.fillRect(position.x - size / 2, position.y - size / 2, size, size);
-        this.ctx.strokeRect(position.x - size / 2, position.y - size / 2, size, size);
+        this.dcc.centeredRect({
+            ...this.#toScreenCoordinates(position),
+            width: size,
+            height: size,
+            fill: "red",
+            stroke: "black",
+            strokeWidth: 8,
+        });
     }
 
-    #renderFrame(millisecondsElapsed) {
+    #renderFrame() {
         this.#clearFrame();
 
+        this.#renderField();
         this.#renderPlayer();
     }
 
     #renderPauseFrame() {
-        this.ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-        this.ctx.fillRect(0, 0, this.width, this.height);
+        this.dcc.fillCanvas("rgba(0, 0, 0, 0.5)");
         this.ctx.fillStyle = "black";
         this.ctx.font = "100px Geo";
         this.ctx.fillText("Paused", 512, 512);

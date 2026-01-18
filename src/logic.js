@@ -17,12 +17,20 @@ export class DDGLogic {
     #deltaRemaining = 0.0;
     #MIN_SIMULATION_STEP = 10; // milliseconds
 
+    player = {
+        position: { x: 30, y: 30 }, // player center
+        size: 32, // pixels; square width and height
+        speed: 320 / 1000, // pixels moved per second; division resolves to pixels moved per millisecond
+    };
+    width = 1024;
+    height = 1024;
+    obstacles = [];
+
     constructor() {
-        this.player = {
-            position: { x: 30, y: 30 }, // player center
-            size: 32, // pixels; square width and height
-            speed: 320 / 1000, // pixels moved per second; division resolves to pixels moved per millisecond
-        };
+        this.obstacles.push({ x: 500, y: 500, width: 30, height: 70 });
+        this.obstacles.push({ x: 30, y: 500, width: 130, height: 70 });
+        this.obstacles.push({ x: 500, y: 30, width: 200, height: 350 });
+        this.obstacles.push({ x: 1000, y: 1000, width: 10, height: 10 });
     }
 
     get paused() { return this.#paused; }
