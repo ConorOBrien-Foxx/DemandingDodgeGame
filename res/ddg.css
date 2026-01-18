@@ -38,6 +38,6 @@ header, footer {
 
 canvas {
     border: 1px solid; /* testing */
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
+    /* image-rendering: pixelated;
+    image-rendering: crisp-edges; */
 }

@@ -1,10 +1,12 @@
 export class DDGRenderer {
     #renderStartTimestamp;
-    #paused = false;
 
-    constructor(canvasOrCtx) {
-        this.canvas = canvasOrCtx.canvas ?? canvasOrCtx;
+    constructor(canvasOrCtx, logic) {
+        this.canvas = canvasOrCtx?.canvas ?? canvasOrCtx;
         this.ctx = canvasOrCtx.canvas ? canvasOrCtx : this.canvas.getContext("2d");
+        this.logic = logic;
+
+        this.canvas.width = this.canvas.height = 1024;
     }
 
     get width() { return this.canvas.width; }
@@ -29,23 +31,7 @@ export class DDGRenderer {
         this.ctx.stroke();
     }
 
-    #renderFrame() {
-        // TODO
-    }
-
-    #renderLoopFrame(timestamp) {
-        if(this.#paused) {
-            // temp illustration
-            this.lineCount = 0;
-            return;
-        }
-        if(this.#renderStartTimestamp === undefined) {
-            this.#renderStartTimestamp = timestamp;
-        }
-        const millisecondsElapsed = timestamp - this.#renderStartTimestamp;
-        // console.log(timestamp, this.#renderStartTimestamp);
-
-        // temp illustration
+    #tempLineDisplay(millisecondsElapsed) {
         this.lineCount ??= 0;
         this.lineFrequency ??= 300; //ms
         let dbg = 0;
@@ -56,10 +42,22 @@ export class DDGRenderer {
                 break;
             }
         }
+    }
 
-        this.#renderFrame();
+    #renderPlayer() {
+        let { size, position } = this.logic.player;
+        this.ctx.fillStyle = "red";
+        this.ctx.strokeStyle = "black";
+        this.ctx.lineWidth = 8;
+        // TODO: helper functions
+        this.ctx.fillRect(position.x - size / 2, position.y - size / 2, size, size);
+        this.ctx.strokeRect(position.x - size / 2, position.y - size / 2, size, size);
+    }
 
-        window.requestAnimationFrame(this.#renderLoopFrame.bind(this));
+    #renderFrame(millisecondsElapsed) {
+        this.#clearFrame();
+
+        this.#renderPlayer();
     }
 
     #renderPauseFrame() {
@@ -70,26 +68,25 @@ export class DDGRenderer {
         this.ctx.fillText("Paused", 512, 512);
     }
 
-    pause() {
-        if(this.#paused) {
-            return;
-        }
-        this.#renderStartTimestamp = undefined;
-        this.#renderPauseFrame();
-        this.#paused = true;
-    }
-
-    resume() {
-        if(!this.#paused) {
-            return;
+    #renderLoopFrame(timestamp) {
+        if(this.#renderStartTimestamp === undefined) {
+            this.#renderStartTimestamp = timestamp;
         }
 
-        this.#paused = false;
+        const millisecondsElapsed = timestamp - this.#renderStartTimestamp;
+        
+        this.logic.step(millisecondsElapsed);
 
-        this.renderLoop();
+        this.#renderFrame(millisecondsElapsed);
+
+        if(this.logic.paused) {
+            this.#renderPauseFrame();
+        }
+
+        window.requestAnimationFrame(this.#renderLoopFrame.bind(this));
     }
 
-    renderLoop() {
+    startRenderLoop() {
         this.#clearFrame();
         window.requestAnimationFrame(this.#renderLoopFrame.bind(this));
     }
