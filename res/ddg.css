@@ -1,0 +1,43 @@
+:root {
+    --background-color: #422;
+    --text-color: #faa;
+}
+
+html {
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+body {
+    margin: 0;
+}
+
+body, button {
+    font-family: "Onest", sans-serif;
+}
+h1, h2, h3, h4, h5, h6 {
+    font-family: "Geo", "Consolas", monospace;
+}
+h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+}
+
+header, footer {
+    text-align: center;
+}
+
+.maxwidth-container {
+    height: 80vh;
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+canvas {
+    border: 1px solid; /* testing */
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
