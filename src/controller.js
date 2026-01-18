@@ -1,6 +1,8 @@
 import { DDGKeys } from "./logic.js";
 
 export class DDGController {
+    #disableRepeatKeys = true;
+
     constructor(renderer, logic) {
         this.renderer = renderer;
         this.logic = logic
@@ -29,6 +31,8 @@ export class DDGController {
         "ArrowDown": DDGKeys.Down,
         "ArrowLeft": DDGKeys.Left,
         "ArrowRight": DDGKeys.Right,
+        "p": DDGKeys.Pause,
+        "Escape": DDGKeys.Pause,
     };
     start() {
         window.addEventListener("blur", () => {
@@ -38,6 +42,9 @@ export class DDGController {
             this.logic.resume();
         });
         window.addEventListener("keydown", (ev) => {
+            if(ev.repeat && this.#disableRepeatKeys) {
+                return;
+            }
             let instructionKey = this.#keyMap[ev.key];
             if(instructionKey) {
                 this.logic.sendKeyDown(instructionKey);

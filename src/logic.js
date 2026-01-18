@@ -3,7 +3,14 @@ export const DDGKeys = {
     Down: Symbol("DDGKeys.Down"),
     Left: Symbol("DDGKeys.Left"),
     Right: Symbol("DDGKeys.Right"),
+    Pause: Symbol("DDGKeys.Pause"),
 };
+const DirectionKeys = [
+    DDGKeys.Up,
+    DDGKeys.Down,
+    DDGKeys.Left,
+    DDGKeys.Right,
+];
 
 export class DDGLogic {
     #pressed = {
@@ -37,14 +44,31 @@ export class DDGLogic {
 
     pause() {
         this.#paused = true;
+        for(let key of DirectionKeys) {
+            this.sendKeyUp(key);
+        }
     }
 
     resume() {
         this.#paused = false;
     }
 
+    togglePause() {
+        if(this.#paused) {
+            this.resume();
+        }
+        else {
+            this.pause();
+        }
+    }
+
     sendKeyDown(key) {
-        this.#pressed[key] = true;
+        if(key in this.#pressed) {
+            this.#pressed[key] = true;
+        }
+        if(key === DDGKeys.Pause) {
+            this.togglePause();
+        }
     }
 
     sendKeyUp(key) {
