@@ -12,6 +12,36 @@ const DirectionKeys = [
     DDGKeys.Right,
 ];
 
+class DDGFieldElement {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+}
+
+class DDGRectangle extends DDGFieldElement {
+    constructor(x, y, width, height) {
+        super(x, y); // shape center
+        this.width = width;
+        this.height = height;
+    }
+}
+
+class DDGPlayer extends DDGRectangle {
+    constructor(x, y, width, speed) {
+        super(x, y, width, width);
+        this.speed = speed; // pixels moved per second
+    }
+
+    get size() {
+        return this.width;
+    }
+
+    getPosition() {
+        return { x: this.x, y: this. y };
+    }
+}
+
 export class DDGLogic {
     #pressed = {
         [DDGKeys.Up]: false,
@@ -24,20 +54,17 @@ export class DDGLogic {
     #deltaRemaining = 0.0;
     #MIN_SIMULATION_STEP = 10; // milliseconds
 
-    player = {
-        position: { x: 30, y: 30 }, // player center
-        size: 32, // pixels; square width and height
-        speed: 320 / 1000, // pixels moved per second; division resolves to pixels moved per millisecond
-    };
     width = 1024;
     height = 1024;
+
+    player = new DDGPlayer(30, 30, 32, 320 / 1000); // division resolves to pixels moved per millisecond
     obstacles = [];
 
     constructor() {
-        this.obstacles.push({ x: 500, y: 500, width: 30, height: 70 });
-        this.obstacles.push({ x: 30, y: 500, width: 130, height: 70 });
-        this.obstacles.push({ x: 500, y: 30, width: 200, height: 350 });
-        this.obstacles.push({ x: 1000, y: 1000, width: 10, height: 10 });
+        this.obstacles.push(new DDGRectangle(500, 500, 30, 70));
+        this.obstacles.push(new DDGRectangle(30, 500, 130, 70));
+        this.obstacles.push(new DDGRectangle(500, 30, 200, 350));
+        this.obstacles.push(new DDGRectangle(1000, 1000, 10, 10));
     }
 
     get paused() { return this.#paused; }
@@ -100,8 +127,8 @@ export class DDGLogic {
             dx++;
         }
 
-        this.player.position.x += dx * this.player.speed * delta;
-        this.player.position.y += dy * this.player.speed * delta;
+        this.player.x += dx * this.player.speed * delta;
+        this.player.y += dy * this.player.speed * delta;
     }
 
     #discreteStep(delta) {

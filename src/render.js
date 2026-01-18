@@ -38,11 +38,11 @@ export class DDGRenderer {
     }
 
     #renderPlayer() {
-        let { size, position } = this.logic.player;
+        let { player } = this.logic;
         this.dcc.centeredRect({
-            ...this.#toScreenCoordinates(position),
-            width: size,
-            height: size,
+            ...this.#toScreenCoordinates(player.getPosition()),
+            width: player.size,
+            height: player.size,
             fill: "red",
             stroke: "black",
             strokeWidth: 8,
