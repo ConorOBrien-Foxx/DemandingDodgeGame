@@ -69,6 +69,18 @@ export class DDGRenderer {
         this.ctx.fillText("Paused", 512, 512);
     }
 
+    #renderCursor() {
+        let { x, y } = this.logic.cursorPosition;
+        if(x === undefined || y === undefined) {
+            return;
+        }
+        this.dcc.centeredRect({
+            x, y,
+            width: 30, height: 30,
+            fill: "pink",
+        });
+    }
+
     #renderLoopFrame(timestamp) {
         if(this.#renderStartTimestamp === undefined) {
             this.#renderStartTimestamp = timestamp;
@@ -83,6 +95,8 @@ export class DDGRenderer {
         if(this.logic.paused) {
             this.#renderPauseFrame();
         }
+
+        this.#renderCursor();
 
         window.requestAnimationFrame(this.#renderLoopFrame.bind(this));
     }

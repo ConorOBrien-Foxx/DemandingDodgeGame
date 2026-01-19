@@ -71,6 +71,7 @@ export class DDGLogic {
     #lastMillisecondsElapsed;
     #deltaRemaining = 0.0;
     #MIN_SIMULATION_STEP = 10; // milliseconds
+    #cursor = { x: undefined, y: undefined };
 
     width = 1024;
     height = 1024;
@@ -120,6 +121,19 @@ export class DDGLogic {
 
     sendKeyUp(key) {
         this.#pressed[key] = false;
+    }
+
+    sendCursorPosition(position) {
+        this.#cursor.x = position.x;
+        this.#cursor.y = position.y;
+    }
+
+    liftCursor() {
+        this.#cursor.x = this.#cursor.y = undefined;
+    }
+
+    get cursorPosition() {
+        return { x: this.#cursor.x, y: this.#cursor.y };
     }
 
     #updateDelta(millisecondsElapsed) {

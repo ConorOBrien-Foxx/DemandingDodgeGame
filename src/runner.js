@@ -7,7 +7,7 @@ export class DDGGameRunner {
         this.game = game;
         this.logic = new DDGLogic();
         this.renderer = new DDGRenderer(this.game, this.logic);
-        this.controller = new DDGController(this.renderer, this.logic);
+        this.controller = new DDGController(this.game, this.renderer, this.logic);
     }
 
     initialize() {

@@ -1,18 +1,23 @@
 import { DDGKeys } from "./logic.js";
+import * as dom from "./dom.js";
 
 export class DDGController {
     #disableRepeatKeys = true;
+    #canvasWidth;
+    get #canvasHeight() { return this.#canvasWidth; }
 
-    constructor(renderer, logic) {
+    constructor(game, renderer, logic) {
+        this.game = game;
         this.renderer = renderer;
-        this.logic = logic
+        this.logic = logic;
     }
 
     #recalculateGameDisplayBounds() {
-        let { width, height } = game.parentElement.getBoundingClientRect();
-        const squareWidth = Math.min(width, height);
-        game.style.width = game.style.height = `${squareWidth}px`;
+        let { width, height } = dom.bounds(game.parentElement);
+        this.#canvasWidth = Math.min(width, height);
+        game.style.width = game.style.height = `${this.#canvasWidth}px`;
     }
+
 
     initialize() {
         window.addEventListener("resize", () => {
@@ -37,6 +42,7 @@ export class DDGController {
     start() {
         window.addEventListener("blur", () => {
             this.logic.pause();
+            this.logic.liftCursor();
         });
         window.addEventListener("focus", () => {
             this.logic.resume();
@@ -55,6 +61,21 @@ export class DDGController {
             if(instructionKey) {
                 this.logic.sendKeyUp(instructionKey);
             }
+        });
+        this.game.addEventListener("mousemove", (ev) => {
+            let box = dom.bounds(this.game);
+            let scaleX = this.#canvasWidth / this.logic.width;
+            let scaleY = this.#canvasWidth / this.logic.height;
+            this.logic.sendCursorPosition({
+                x: (ev.clientX - box.left) / scaleX,
+                y: (ev.clientY - box.top) / scaleY,
+            });
+            // let { clientX, clientY } = ev;
+            // console.log(ev);
+            // this.logic.sendCursorPosition({ x: clientX, y: clientY });
+        });
+        this.game.addEventListener("mouseout", () => {
+            this.logic.liftCursor();
         });
     }
 };
