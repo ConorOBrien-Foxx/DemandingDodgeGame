@@ -1,3 +1,5 @@
+import { DDGPlayer, DDGRectangle } from "./primitives.js";
+
 export const DDGKeys = {
     Up: Symbol("DDGKeys.Up"),
     Down: Symbol("DDGKeys.Down"),
@@ -11,54 +13,6 @@ const DirectionKeys = [
     DDGKeys.Left,
     DDGKeys.Right,
 ];
-
-class DDGFieldElement {
-    constructor(x, y) {
-        this.x = x;
-        this.y = y;
-    }
-}
-
-class DDGRectangle extends DDGFieldElement {
-    constructor(x, y, width, height) {
-        super(x, y); // shape center
-        this.width = width;
-        this.height = height;
-    }
-
-    static bottomLeftToTopRight(x1, y1, x2, y2) {
-        if(x2 < x1 || y2 < y1) {
-            throw new RangeError("Coordinates would draw inverted shape");
-        } 
-        let width = x2 - x1;
-        let height = y2 - y1;
-        return new DDGRectangle(x1 + width / 2, y1 + height / 2, width, height);
-    }
-
-    intersectsRectangle(rect) {
-        return (
-            this.x - this.width / 2 < rect.x + rect.width / 2 &&
-            this.x + this.width / 2 > rect.x - rect.width / 2 &&
-            this.y - this.height / 2 < rect.y + rect.height / 2 &&
-            this.y + this.height / 2 > rect.y - rect.height / 2
-        );
-    }
-}
-
-class DDGPlayer extends DDGRectangle {
-    constructor(x, y, width, speed) {
-        super(x, y, width, width);
-        this.speed = speed; // pixels moved per second
-    }
-
-    get size() {
-        return this.width;
-    }
-
-    getPosition() {
-        return { x: this.x, y: this. y };
-    }
-}
 
 export class DDGLogic {
     #pressed = {

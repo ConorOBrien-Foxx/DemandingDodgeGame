@@ -2,6 +2,23 @@ import { DDGCanvasContext } from "./canvas.js";
 
 export class DDGRenderer {
     #renderStartTimestamp;
+    #pauseMenuClickables = [
+        {
+            text: "Paused",
+            x: 512,
+            y: 128,
+            font: "100px Geo",
+            fill: "black",
+        },
+        {
+            text: "Reset",
+            x: 512,
+            y: 256,
+            font: "80px Geo",
+            fill: "black",
+        },
+    ];
+    clickables = [];
 
     constructor(canvasOrCtx, logic) {
         this.canvas = canvasOrCtx?.canvas ?? canvasOrCtx;
@@ -62,11 +79,25 @@ export class DDGRenderer {
         this.#renderPlayer();
     }
 
+    #isRenderingPauseFrame = false;
     #renderPauseFrame() {
-        this.dcc.fillCanvas("rgba(0, 0, 0, 0.5)");
-        this.ctx.fillStyle = "black";
-        this.ctx.font = "100px Geo";
-        this.ctx.fillText("Paused", 512, 512);
+        if(this.logic.paused) {
+            if(!this.#isRenderingPauseFrame) {
+                this.clickables = this.#pauseMenuClickables;
+                this.clickRegions = [];
+            }
+            this.dcc.fillCanvas("rgba(0, 0, 0, 0.3)");
+            for(let clickable of this.clickables) {
+                let clickRegion = this.dcc.text({ ...clickable, box: { fill: "white" }});
+                if(!this.#isRenderingPauseFrame) {
+                    this.clickRegions.push(clickRegion);
+                }
+            }
+        }
+        else if(this.#isRenderingPauseFrame) {
+            this.clickables = [];
+        }
+        this.#isRenderingPauseFrame = this.logic.paused;
     }
 
     #renderCursor() {
@@ -91,11 +122,7 @@ export class DDGRenderer {
         this.logic.step(millisecondsElapsed);
 
         this.#renderFrame(millisecondsElapsed);
-
-        if(this.logic.paused) {
-            this.#renderPauseFrame();
-        }
-
+        this.#renderPauseFrame();
         this.#renderCursor();
 
         window.requestAnimationFrame(this.#renderLoopFrame.bind(this));
