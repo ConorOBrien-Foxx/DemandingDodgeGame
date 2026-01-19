@@ -26,6 +26,15 @@ class DDGRectangle extends DDGFieldElement {
         this.height = height;
     }
 
+    static bottomLeftToTopRight(x1, y1, x2, y2) {
+        if(x2 < x1 || y2 < y1) {
+            throw new RangeError("Coordinates would draw inverted shape");
+        } 
+        let width = x2 - x1;
+        let height = y2 - y1;
+        return new DDGRectangle(x1 + width / 2, y1 + height / 2, width, height);
+    }
+
     intersectsRectangle(rect) {
         return (
             this.x - this.width / 2 < rect.x + rect.width / 2 &&
@@ -66,14 +75,16 @@ export class DDGLogic {
     width = 1024;
     height = 1024;
 
-    player = new DDGPlayer(30, 30, 32, 320 / 1000); // division resolves to pixels moved per millisecond
+    player = new DDGPlayer(200, 200, 32, 320 / 1000); // division resolves to pixels moved per millisecond
     obstacles = [];
+    hazards = [];
 
     constructor() {
-        this.obstacles.push(new DDGRectangle(500, 500, 30, 70));
-        this.obstacles.push(new DDGRectangle(30, 500, 130, 70));
-        this.obstacles.push(new DDGRectangle(500, 30, 200, 350));
-        this.obstacles.push(new DDGRectangle(1000, 1000, 10, 10));
+        this.obstacles.push(DDGRectangle.bottomLeftToTopRight(0, 0, this.width, 50));
+        this.obstacles.push(DDGRectangle.bottomLeftToTopRight(0, 0, 50, this.height));
+        this.obstacles.push(DDGRectangle.bottomLeftToTopRight(0, this.height - 50, this.width, this.height));
+        this.obstacles.push(DDGRectangle.bottomLeftToTopRight(this.width - 50, 0, this.width, this.height));
+        this.hazards.push(new DDGRectangle(512, 512, 50, 50));
     }
 
     get paused() { return this.#paused; }
@@ -119,6 +130,38 @@ export class DDGLogic {
         this.#deltaRemaining += delta;
     }
 
+    resetPlayer() {
+        // TODO: programmable reset points
+        this.player.x = 200;
+        this.player.y = 200;
+    }
+
+    // NOTE: mutates coordinates, and does not restore them
+    #testPlayerCoordinates(testX, testY) {
+        this.player.x = testX;
+        this.player.y = testY;
+        for(let obstacle of this.obstacles) {
+            if(this.player.intersectsRectangle(obstacle)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // if collision cannot be resolved, player position is left as (oldX,oldY)
+    #resolveCollision(oldX, oldY, newX, newY) {
+        if(this.#testPlayerCoordinates(newX, oldY)) {
+            return;
+        }
+        if(this.#testPlayerCoordinates(oldX, newY)) {
+            return;
+        }
+        if(this.#testPlayerCoordinates(oldX, oldY)) {
+            return;
+        }
+        console.warn("Could not resolve collision.");
+    }
+
     #stepPlayer(delta) {
         let dx = 0;
         let dy = 0;
@@ -145,17 +188,16 @@ export class DDGLogic {
         this.player.x = newX;
         this.player.y = newY;
 
-        // TODO: optimize by testing only obstacles close to player
-        // TODO: not all obstacles are collidable
+        // TODO: optimize by testing only obstacles and hazards close to player
         for(const obstacle of this.obstacles) {
             if(this.player.intersectsRectangle(obstacle)) {
-                for(let [x, y] of [[newX, oldY], [oldX, newY], [oldX, oldY]]) {
-                    this.player.x = x;
-                    this.player.y = y;
-                    if(!this.player.intersectsRectangle(obstacle)) {
-                        break;
-                    }
-                }
+                this.#resolveCollision(oldX, oldY, newX, newY);
+                break;
+            }
+        }
+        for(let hazard of this.hazards) {
+            if(this.player.intersectsRectangle(hazard)) {
+                this.resetPlayer();
                 break;
             }
         }
@@ -168,6 +210,13 @@ export class DDGLogic {
             return;
         }
 
+        this._tempHazardTimer ??= 0;
+        this._tempHazardTimer += delta;
+        if(this._tempHazardTimer >= 500/*ms*/) {
+            this._tempHazardTimer = 0;
+            this.hazards[0].x = Math.random() * 1024 | 0;
+            this.hazards[0].y = Math.random() * 1024 | 0;
+        }
         this.#stepPlayer(delta);
     }
 
