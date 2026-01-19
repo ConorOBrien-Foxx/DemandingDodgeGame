@@ -9,4 +9,10 @@ window.addEventListener("load", () => {
     let runner = new DDGGameRunner(game);
     runner.initialize();
     runner.start();
+
+    // inline JavaScript code in index.html is responsible for removing the Ko-fi button if it's been 6 months (16070400000 milliseconds)
+    dom.find(".hideme")?.addEventListener("click", () => {
+        localStorage.hideConorKofi = +new Date();
+        dom.find(".ko-fi").remove();
+    });
 });

@@ -1,6 +1,11 @@
 :root {
     --background-color: #422;
     --text-color: #faa;
+
+    --action-color: #ff2dc7;
+    --action-highlight-color: #ff8ae0;
+    --action-background-color: #602323;
+    --action-background-highlight-color: #8b3030;
 }
 
 html {
@@ -40,4 +45,37 @@ canvas {
     border: 1px solid; /* testing */
     /* image-rendering: pixelated;
     image-rendering: crisp-edges; */
+}
+
+a, a:visited {
+    color: var(--action-color);
+}
+a:hover {
+    color: var(--action-highlight-color);
+}
+button {
+    color: var(--action-color);
+    border: 1px solid currentcolor;
+    background-color: var(--action-background-color);
+    cursor: pointer;
+    border-radius: 5px;
+
+}
+button:hover {
+    background-color: var(--action-background-highlight-color);
+}
+
+footer {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.ko-fi {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
 }
