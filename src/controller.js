@@ -1,4 +1,4 @@
-import { DDGKeys } from "./logic.js";
+import { DDGKeys, DDGPauseSource } from "./logic.js";
 import * as dom from "./dom.js";
 
 export class DDGController {
@@ -41,11 +41,11 @@ export class DDGController {
     };
     start() {
         window.addEventListener("blur", () => {
-            this.logic.pause();
+            this.logic.pause(DDGPauseSource.WindowFocus);
             this.logic.liftCursor();
         });
         window.addEventListener("focus", () => {
-            this.logic.resume();
+            this.logic.resume(DDGPauseSource.WindowFocus);
         });
         window.addEventListener("keydown", (ev) => {
             if(ev.repeat && this.#disableRepeatKeys) {

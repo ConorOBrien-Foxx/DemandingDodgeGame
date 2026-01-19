@@ -13,6 +13,10 @@ export class DDGRectangle extends DDGFieldElement {
         this.height = height;
     }
 
+    static from({ x, y, width, height }) {
+        return new DDGRectangle(x, y, width, height);
+    }
+
     static bottomLeftToTopRight(x1, y1, x2, y2) {
         if(x2 < x1 || y2 < y1) {
             throw new RangeError("Coordinates would draw inverted shape");
@@ -23,6 +27,7 @@ export class DDGRectangle extends DDGFieldElement {
     }
 
     static rectangleRectangleIntersection(r1, r2) {
+        // TODO: should this be <= and >=?
         return (
             r1.x - r1.width / 2 < r2.x + r2.width / 2 &&
             r1.x + r1.width / 2 > r2.x - r2.width / 2 &&
@@ -31,8 +36,22 @@ export class DDGRectangle extends DDGFieldElement {
         );
     }
 
+    static rectangleHasPoint(rect, p) {
+        // TODO: should this be <= and >=?
+        return (
+            rect.x - rect.width / 2 < p.x &&
+            rect.x + rect.width / 2 > p.x &&
+            rect.y - rect.height / 2 < p.y &&
+            rect.y + rect.height / 2 > p.y
+        );
+    }
+
     intersectsRectangle(rect) {
         return DDGRectangle.rectangleRectangleIntersection(this, rect);
+    }
+
+    hasPoint(p) {
+        return DDGRectangle.rectangleHasPoint(this, p);
     }
 }
 

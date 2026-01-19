@@ -19,6 +19,7 @@ export class DDGRenderer {
         },
     ];
     clickables = [];
+    #clickRegions = [];
 
     constructor(canvasOrCtx, logic) {
         this.canvas = canvasOrCtx?.canvas ?? canvasOrCtx;
@@ -82,25 +83,44 @@ export class DDGRenderer {
     #isRenderingPauseFrame = false;
     #renderPauseFrame() {
         if(this.logic.paused) {
+            let anyTargeted = false;
             if(!this.#isRenderingPauseFrame) {
                 this.clickables = this.#pauseMenuClickables;
-                this.clickRegions = [];
+                this.#clickRegions = [];
             }
             this.dcc.fillCanvas("rgba(0, 0, 0, 0.3)");
-            for(let clickable of this.clickables) {
-                let clickRegion = this.dcc.text({ ...clickable, box: { fill: "white" }});
-                if(!this.#isRenderingPauseFrame) {
-                    this.clickRegions.push(clickRegion);
+            let calculateClickRegion = !this.#isRenderingPauseFrame;
+            // TODO: break `.text` into a separate `calculateText` function?
+            this.clickables.forEach((clickable, idx) => {
+                let precalculatedClickRegion = this.#clickRegions[idx];
+                let targeted = precalculatedClickRegion && precalculatedClickRegion.hasPoint(this.logic.cursorPosition);
+                let fill = targeted ? "blue" : "white";
+
+                let clickRegion = this.dcc.text({
+                    ...clickable,
+                    verticalAlign: "center",
+                    box: { fill },
+                    calculateClickRegion,
+                });
+
+                if(calculateClickRegion) {
+                    this.#clickRegions.push(clickRegion);
                 }
-            }
+
+                anyTargeted ||= targeted;
+            });
+
+            this.canvas.style.cursor = anyTargeted ? "pointer" : "";
         }
         else if(this.#isRenderingPauseFrame) {
             this.clickables = [];
+            this.canvas.style.cursor = "";
         }
         this.#isRenderingPauseFrame = this.logic.paused;
     }
 
     #renderCursor() {
+        return; // usually just for debugging
         let { x, y } = this.logic.cursorPosition;
         if(x === undefined || y === undefined) {
             return;

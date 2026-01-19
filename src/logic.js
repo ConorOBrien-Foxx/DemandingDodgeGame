@@ -13,6 +13,11 @@ const DirectionKeys = [
     DDGKeys.Left,
     DDGKeys.Right,
 ];
+// priorities: higher is more important
+export const DDGPauseSource = {
+    WindowFocus: 1,
+    User: 2,
+};
 
 export class DDGLogic {
     #pressed = {
@@ -21,7 +26,7 @@ export class DDGLogic {
         [DDGKeys.Left]: false,
         [DDGKeys.Right]: false,
     };
-    #paused = false;
+    #pausePriorityLevel = 0;
     #lastMillisecondsElapsed;
     #deltaRemaining = 0.0;
     #MIN_SIMULATION_STEP = 10; // milliseconds
@@ -42,25 +47,33 @@ export class DDGLogic {
         this.hazards.push(new DDGRectangle(512, 512, 50, 50));
     }
 
-    get paused() { return this.#paused; }
+    get paused() { return this.#pausePriorityLevel !== 0; }
 
-    pause() {
-        this.#paused = true;
+    pause(priorityLevel = DDGPauseSource.User) {
+        if(priorityLevel <= this.#pausePriorityLevel) {
+            return;
+        }
+        this.#pausePriorityLevel = priorityLevel;
         for(let key of DirectionKeys) {
             this.sendKeyUp(key);
         }
     }
 
-    resume() {
-        this.#paused = false;
+    resume(resumeSource = DDGPauseSource.User) {
+        // console.log(this.#pausePriorityLevel, resumeSource);
+        if(resumeSource < this.#pausePriorityLevel) {
+            // e.g. do not unpause the user when focusing back
+            return;
+        }
+        this.#pausePriorityLevel = 0;
     }
 
-    togglePause() {
-        if(this.#paused) {
-            this.resume();
+    togglePause(pauseSource) {
+        if(this.#pausePriorityLevel) {
+            this.resume(pauseSource);
         }
         else {
-            this.pause();
+            this.pause(pauseSource);
         }
     }
 
@@ -173,7 +186,7 @@ export class DDGLogic {
 
     #discreteStep(delta) {
         // delta guaranteed to be equal to this.#MIN_SIMULATION_STEP
-        if(this.#paused) {
+        if(this.#pausePriorityLevel) {
             // TODO: optimize by not calling discreteStep?
             return;
         }
