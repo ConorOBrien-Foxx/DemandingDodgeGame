@@ -1,8 +1,12 @@
 import { DDGCanvasContext } from "./canvas.js";
 
+export const DDGButtonActions = {
+    Reset: Symbol("DDGButtonActions.Reset"),
+};
+
 export class DDGRenderer {
     #renderStartTimestamp;
-    #pauseMenuClickables = [
+    #pauseMenuTextElements = [
         {
             text: "Paused",
             x: 512,
@@ -16,10 +20,13 @@ export class DDGRenderer {
             y: 256,
             font: "80px Geo",
             fill: "black",
+            action: DDGButtonActions.Reset,
         },
     ];
-    clickables = [];
+    textElements = [];
     #clickRegions = [];
+    #isRenderingPauseFrame = false;
+    #textIsHovered = [];
 
     constructor(canvasOrCtx, logic) {
         this.canvas = canvasOrCtx?.canvas ?? canvasOrCtx;
@@ -80,31 +87,35 @@ export class DDGRenderer {
         this.#renderPlayer();
     }
 
-    #isRenderingPauseFrame = false;
+    // TODO: extract click handling logic out of the renderer
     #renderPauseFrame() {
         if(this.logic.paused) {
             let anyTargeted = false;
             if(!this.#isRenderingPauseFrame) {
-                this.clickables = this.#pauseMenuClickables;
+                this.textElements = this.#pauseMenuTextElements;
                 this.#clickRegions = [];
             }
             this.dcc.fillCanvas("rgba(0, 0, 0, 0.3)");
             let calculateClickRegion = !this.#isRenderingPauseFrame;
             // TODO: break `.text` into a separate `calculateText` function?
-            this.clickables.forEach((clickable, idx) => {
+            this.textElements.forEach((text, idx) => {
+                let isClickable = !!text.action;
                 let precalculatedClickRegion = this.#clickRegions[idx];
-                let targeted = precalculatedClickRegion && precalculatedClickRegion.hasPoint(this.logic.cursorPosition);
+                let targeted = isClickable &&
+                    precalculatedClickRegion &&
+                    precalculatedClickRegion.hasPoint(this.logic.cursorPosition);
+                this.#textIsHovered[idx] = targeted;
                 let fill = targeted ? "blue" : "white";
 
                 let clickRegion = this.dcc.text({
-                    ...clickable,
+                    ...text,
                     verticalAlign: "center",
                     box: { fill },
-                    calculateClickRegion,
+                    calculateClickRegion: isClickable && calculateClickRegion,
                 });
 
                 if(calculateClickRegion) {
-                    this.#clickRegions.push(clickRegion);
+                    this.#clickRegions[idx] = clickRegion;
                 }
 
                 anyTargeted ||= targeted;
@@ -113,10 +124,15 @@ export class DDGRenderer {
             this.canvas.style.cursor = anyTargeted ? "pointer" : "";
         }
         else if(this.#isRenderingPauseFrame) {
-            this.clickables = [];
+            this.textElements = [];
+            this.#textIsHovered = [];
             this.canvas.style.cursor = "";
         }
         this.#isRenderingPauseFrame = this.logic.paused;
+    }
+
+    getTopHover() {
+        return this.textElements.find((_, idx) => this.#textIsHovered[idx]);
     }
 
     #renderCursor() {

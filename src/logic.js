@@ -17,7 +17,21 @@ const DirectionKeys = [
 export const DDGPauseSource = {
     WindowFocus: 1,
     User: 2,
+    Force: 4096,
 };
+
+class DDGLevel {
+    #startPoint = { x: undefined, y: undefined };
+
+    constructor(startPoint) {
+        this.#startPoint = startPoint;
+    }
+
+    reset(player) {
+        player.x = this.#startPoint.x;
+        player.y = this.#startPoint.y;
+    }
+}
 
 export class DDGLogic {
     #pressed = {
@@ -35,7 +49,8 @@ export class DDGLogic {
     width = 1024;
     height = 1024;
 
-    player = new DDGPlayer(200, 200, 32, 320 / 1000); // division resolves to pixels moved per millisecond
+    level = new DDGLevel({ x: 200, y: 200 });
+    player = new DDGPlayer(undefined, undefined, 32, 320 / 1000); // division resolves to pixels moved per millisecond
     obstacles = [];
     hazards = [];
 
@@ -45,6 +60,7 @@ export class DDGLogic {
         this.obstacles.push(DDGRectangle.bottomLeftToTopRight(0, this.height - 50, this.width, this.height));
         this.obstacles.push(DDGRectangle.bottomLeftToTopRight(this.width - 50, 0, this.width, this.height));
         this.hazards.push(new DDGRectangle(512, 512, 50, 50));
+        this.resetLevel();
     }
 
     get paused() { return this.#pausePriorityLevel !== 0; }
@@ -111,10 +127,8 @@ export class DDGLogic {
         this.#deltaRemaining += delta;
     }
 
-    resetPlayer() {
-        // TODO: programmable reset points
-        this.player.x = 200;
-        this.player.y = 200;
+    resetLevel() {
+        this.level.reset(this.player);
     }
 
     // NOTE: mutates coordinates, and does not restore them
@@ -178,7 +192,7 @@ export class DDGLogic {
         }
         for(let hazard of this.hazards) {
             if(this.player.intersectsRectangle(hazard)) {
-                this.resetPlayer();
+                this.resetLevel();
                 break;
             }
         }
@@ -186,7 +200,7 @@ export class DDGLogic {
 
     #discreteStep(delta) {
         // delta guaranteed to be equal to this.#MIN_SIMULATION_STEP
-        if(this.#pausePriorityLevel) {
+        if(this.paused) {
             // TODO: optimize by not calling discreteStep?
             return;
         }

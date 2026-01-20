@@ -1,5 +1,6 @@
 import { DDGKeys, DDGPauseSource } from "./logic.js";
 import * as dom from "./dom.js";
+import { DDGButtonActions } from "./render.js";
 
 export class DDGController {
     #disableRepeatKeys = true;
@@ -73,6 +74,18 @@ export class DDGController {
             // let { clientX, clientY } = ev;
             // console.log(ev);
             // this.logic.sendCursorPosition({ x: clientX, y: clientY });
+        });
+        this.game.addEventListener("click", (ev) => {
+            // TODO: extract click handling logic out of the renderer
+            let hover = this.renderer.getTopHover();
+            if(!hover) {
+                return;
+            }
+
+            if(hover.action === DDGButtonActions.Reset) {
+                this.logic.resetLevel();
+                this.logic.resume(DDGPauseSource.Force);
+            }
         });
         this.game.addEventListener("mouseout", () => {
             this.logic.liftCursor();
