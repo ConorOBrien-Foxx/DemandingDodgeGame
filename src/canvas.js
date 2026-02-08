@@ -46,6 +46,8 @@ export class DDGCanvasContext {
         });
     }
 
+    // textAlign in ["left", "right", "center", ...(whatever the base JS canvas allows)]
+    // verticalAlign in ["top", "center", "bottom"]
     text({ x, y, text, font, textAlign = "center", verticalAlign = "center", stroke, strokeWidth, fill, box, calculateClickRegion = false }) {
         // debug: render anchor point
         // let anchorPoint = { x, y, width: 50, height: 50, stroke: "lime", strokeWidth: 4 };

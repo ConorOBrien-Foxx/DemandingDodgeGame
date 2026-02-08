@@ -1,3 +1,4 @@
+import { euclideanDistance, euclideanDistancePoints, lerp2d } from "./core.js";
 import { DDGPlayer, DDGRectangle } from "./primitives.js";
 
 export const DDGKeys = {
@@ -20,16 +21,65 @@ export const DDGPauseSource = {
     Force: 4096,
 };
 
-class DDGLevel {
-    #startPoint = { x: undefined, y: undefined };
-
-    constructor(startPoint) {
-        this.#startPoint = startPoint;
+class DDGHazard {
+    // path is a list of waypoints { x, y, duration (milliseconds) }
+    // supports duration=0 for teleportation between waypoints
+    constructor({ hitbox, path }) {
+        this.hitbox = hitbox;
+        this.path = path;
+        this.totalDuration = this.path.reduce((acc, waypoint) => acc + waypoint.duration, 0);
+        /*
+        let pathLength = 0;
+        this.path.forEach((p, idx) => {
+            // circular, so wrap around with idx == 0 going to -1
+            let prev = this.path.at(idx - 1);
+            pathLength += euclideanDistancePoints(p, prev);
+        });
+        console.log(pathLength);
+        this.cycleTime = pathLength / this.speed;
+        */
     }
 
-    reset(player) {
-        player.x = this.#startPoint.x;
-        player.y = this.#startPoint.y;
+    inferPosition(levelTimer) {
+        let timerOffset = levelTimer % this.totalDuration;
+        let sourceIdx = this.path.findIndex(waypoint => (timerOffset -= waypoint.duration) < 0);
+        let targetIdx = (sourceIdx + 1) % this.path.length;
+
+        let source = this.path[sourceIdx];
+        let target = this.path[targetIdx];
+        let { duration } = source;
+        
+        // timerOffset is now negative, fix the offset
+        timerOffset += duration;
+        
+        let interpolated = lerp2d(source, target, timerOffset / duration);
+
+        this.hitbox.x = interpolated.x;
+        this.hitbox.y = interpolated.y;
+    }
+
+    // TODO: helper constructor that is given a hitbox, path without durations, and speed, and calculates durations 
+}
+
+class DDGLevel {
+    startPoint = { x: undefined, y: undefined };
+    obstacles = [];
+    hazards = [];
+
+    // TODO: level might (will) have multiple start points, and might (will) depend on where the player enters the level
+    setStartPoint(startPoint) {
+        this.startPoint = startPoint;
+        return this;
+    }
+
+    addObstacle(rect) {
+        this.obstacles.push(rect);
+        return this;
+    }
+
+    addHazard(hazard) {
+        this.hazards.push(hazard);
+        return this;
     }
 }
 
@@ -45,22 +95,55 @@ export class DDGLogic {
     #deltaRemaining = 0.0;
     #MIN_SIMULATION_STEP = 10; // milliseconds
     #cursor = { x: undefined, y: undefined };
+    #levelTimer = 0.0;
 
     width = 1024;
     height = 1024;
 
-    level = new DDGLevel({ x: 200, y: 200 });
+    // TODO: load from json
+    level = new DDGLevel()
+        .setStartPoint({ x: 200, y: 200 })
+        .addObstacle(DDGRectangle.bottomLeftToTopRight(0, 0, this.width, 50))
+        .addObstacle(DDGRectangle.bottomLeftToTopRight(0, 0, 50, this.height))
+        .addObstacle(DDGRectangle.bottomLeftToTopRight(0, this.height - 50, this.width, this.height))
+        .addObstacle(DDGRectangle.bottomLeftToTopRight(this.width - 50, 0, this.width, this.height))
+        .addHazard(new DDGHazard({
+            hitbox: new DDGRectangle(512, 512, 50, 50),
+            path: [
+                { x: 500, y: 200, duration: 2000 },
+                { x: 412, y: 100, duration: 1000 },
+                { x: 712, y: 634, duration: 500 },
+                { x: 100, y: 412, duration: 250 },
+            ],
+        }))
+        ;
     player = new DDGPlayer(undefined, undefined, 32, 320 / 1000); // division resolves to pixels moved per millisecond
     obstacles = [];
     hazards = [];
 
     constructor() {
-        this.obstacles.push(DDGRectangle.bottomLeftToTopRight(0, 0, this.width, 50));
-        this.obstacles.push(DDGRectangle.bottomLeftToTopRight(0, 0, 50, this.height));
-        this.obstacles.push(DDGRectangle.bottomLeftToTopRight(0, this.height - 50, this.width, this.height));
-        this.obstacles.push(DDGRectangle.bottomLeftToTopRight(this.width - 50, 0, this.width, this.height));
-        this.hazards.push(new DDGRectangle(512, 512, 50, 50));
+        this.loadLevel();
+    }
+
+    loadLevel() {
+        this.obstacles = this.level.obstacles;
+        this.hazards = this.level.hazards;
         this.resetLevel();
+    }
+
+    resetLevel() {
+        this.#levelTimer = 0.0;
+        this.player.x = this.level.startPoint.x;
+        this.player.y = this.level.startPoint.y;
+        this.hazards.forEach(hazard => {
+            // we're okay mutating hitbox x/y since that isn't crucial to instantiating the level
+            hazard.hitbox.x = hazard.path[0].x;
+            hazard.hitbox.y = hazard.path[0].y;
+        });
+    }
+
+    debugText() {
+        return `${this.#levelTimer}ms`;
     }
 
     get paused() { return this.#pausePriorityLevel !== 0; }
@@ -125,10 +208,6 @@ export class DDGLogic {
             : millisecondsElapsed - this.#lastMillisecondsElapsed;
         this.#lastMillisecondsElapsed = millisecondsElapsed;
         this.#deltaRemaining += delta;
-    }
-
-    resetLevel() {
-        this.level.reset(this.player);
     }
 
     // NOTE: mutates coordinates, and does not restore them
@@ -198,6 +277,12 @@ export class DDGLogic {
         }
     }
 
+    #stepHazards(delta) {
+        for(let hazard of this.hazards) {
+            hazard.inferPosition(this.#levelTimer);
+        }
+    }
+
     #discreteStep(delta) {
         // delta guaranteed to be equal to this.#MIN_SIMULATION_STEP
         if(this.paused) {
@@ -205,14 +290,18 @@ export class DDGLogic {
             return;
         }
 
+        /*
         this._tempHazardTimer ??= 0;
         this._tempHazardTimer += delta;
-        if(this._tempHazardTimer >= 500/*ms*/) {
+        if(this._tempHazardTimer >= 500) {
             this._tempHazardTimer = 0;
             this.hazards[0].x = Math.random() * 1024 | 0;
             this.hazards[0].y = Math.random() * 1024 | 0;
-        }
+        }*/
+        this.#stepHazards(delta);
         this.#stepPlayer(delta);
+
+        this.#levelTimer += delta;
     }
 
     step(millisecondsElapsed) {

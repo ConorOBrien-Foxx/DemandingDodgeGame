@@ -61,8 +61,25 @@ export class DDGRenderer {
             });
         }
         for(let hazard of this.logic.hazards) {
+            // console.log(hazard);
+
+            // debug path
+            hazard.path.forEach(({ x, y }, idx) => {
+                let screenXY = this.#toScreenCoordinates({ x, y });
+                this.dcc.centeredRect({
+                    ...screenXY,
+                    width: 20, height: 20, fill: "red"
+                });
+                this.dcc.text({
+                    ...screenXY,
+                    font: "20px Arial",
+                    fill: "white",
+                    text: idx,
+                });
+            });
+
             this.dcc.centeredRect({
-                ...this.#toScreenCoordinates(hazard),
+                ...this.#toScreenCoordinates(hazard.hitbox),
                 fill: "orange",
             });
         }
@@ -80,14 +97,27 @@ export class DDGRenderer {
         });
     }
 
+    #renderDebug() {
+        this.dcc.text({
+            x: 15, y: 15,
+            font: "32px Arial",
+            fill: "black",
+            textAlign: "left",
+            verticalAlign: "top",
+            text: this.logic.debugText(),
+        })
+    }
+
     #renderFrame() {
         this.#clearFrame();
 
         this.#renderField();
         this.#renderPlayer();
+        this.#renderDebug();
     }
 
     // TODO: extract click handling logic out of the renderer
+    // TODO: make clickable regions look visibly different from other text elements
     #renderPauseFrame() {
         if(this.logic.paused) {
             let anyTargeted = false;

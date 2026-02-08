@@ -13,10 +13,11 @@ Aesthetic:
 - Geometric
 
 Abilities (function like Charms in Hollow Knight or Badges in a Hat in Time, i.e., you can only equip a few at a time, and the amount you can equip at a given time can be expanded over time):
-- Slowdown (similar to SHIFT in Undertale, allows for fine-grained movement, e.g., in mazes)
+- Sneak (similar to SHIFT in Undertale, allows for fine-grained movement, e.g., in mazes)
 - Hover (float above hazards or pits for a brief period)
 - Sprint (move faster)
 - Shield (you can take 1 hit per screen before dying; death resets your shield)
+- Time Slow (temporarily slow hazards?)
 
 Level design:
 - Overall hub world connecting to subworlds
