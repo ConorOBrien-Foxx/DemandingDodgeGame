@@ -1,4 +1,6 @@
 // misc library functions
+export { default as bezier } from "./bezier-easing/src/index.js";
+
 export const euclideanDistance = (x1, y1, x2, y2) =>
     Math.hypot(x2 - x1, y2 - y1);
 

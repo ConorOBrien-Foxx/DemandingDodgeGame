@@ -1,4 +1,4 @@
-import { euclideanDistance, euclideanDistancePoints, lerp2d } from "./core.js";
+import { euclideanDistance, euclideanDistancePoints, lerp2d, bezier } from "./core.js";
 import { DDGPlayer, DDGRectangle } from "./primitives.js";
 
 export const DDGKeys = {
@@ -24,9 +24,10 @@ export const DDGPauseSource = {
 class DDGHazard {
     // path is a list of waypoints { x, y, duration (milliseconds) }
     // supports duration=0 for teleportation between waypoints
-    constructor({ hitbox, path }) {
+    constructor({ hitbox, path, easing }) {
         this.hitbox = hitbox;
         this.path = path;
+        this.easing = easing || null;
         this.totalDuration = this.path.reduce((acc, waypoint) => acc + waypoint.duration, 0);
         /*
         let pathLength = 0;
@@ -51,8 +52,13 @@ class DDGHazard {
         
         // timerOffset is now negative, fix the offset
         timerOffset += duration;
-        
-        let interpolated = lerp2d(source, target, timerOffset / duration);
+        let lerpAmount = timerOffset / duration;
+
+        if(this.easing) {
+            lerpAmount = this.easing(lerpAmount);
+        }
+
+        let interpolated = lerp2d(source, target, lerpAmount);
 
         this.hitbox.x = interpolated.x;
         this.hitbox.y = interpolated.y;
@@ -115,6 +121,7 @@ export class DDGLogic {
                 { x: 712, y: 634, duration: 500 },
                 { x: 100, y: 412, duration: 250 },
             ],
+            easing: bezier(0.6, 0, 0.4, 1),
         }))
         ;
     player = new DDGPlayer(undefined, undefined, 32, 320 / 1000); // division resolves to pixels moved per millisecond

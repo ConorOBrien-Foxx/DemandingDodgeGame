@@ -1,0 +1,3 @@
+[submodule "src/bezier-easing"]
+	path = src/bezier-easing
+	url = https://github.com/ConorOBrien-Foxx/bezier-easing.git

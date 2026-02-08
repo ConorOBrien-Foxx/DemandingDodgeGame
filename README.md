@@ -6,6 +6,10 @@ The objective is to offer a simple, browser-accessible, randomizable, and engagi
 
 This game is free and open source! If you like what I'm doing, and want to support me, please feel free to [**support my Ko-fi**](https://ko-fi.com/conorobrien)!
 
+## Cloning
+
+This uses [git submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules); you may wish to `git clone --recurse-submodules`.
+
 ## Plans, Ideas
 
 Aesthetic:
@@ -39,3 +43,10 @@ Subworlds:
 
 Boss fight:
 - Dynamic stage
+
+## TODOS (from 1/22/26)
+- hazard path easing (e.g. spending more time on the path waypoints - a hazard polygon (say, N=5) which the player goes into and then out of)
+- camera that moves with player in hub worlds, fixed camera for puzzle levels
+- wall collider for optimization (with holes?)
+- teleport pads
+- N specific fragments (like Slay the Spire's, aesthetically) required to unlock final fight
