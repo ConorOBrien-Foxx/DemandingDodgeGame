@@ -270,7 +270,7 @@ export class DDGLogic {
             }
         }
         for(let hazard of this.hazards) {
-            if(this.player.intersectsRectangle(hazard)) {
+            if(this.player.intersectsRectangle(hazard.hitbox)) {
                 this.resetLevel();
                 break;
             }
